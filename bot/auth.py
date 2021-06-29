@@ -1,0 +1,6 @@
+#consumer_key        = 'Ftqfp08k9Rs08PXilnpTYnbdP'
+#consumer_secret     = 'OOmdkFgna3PNvRD9rBnnwgHPcGkA3aglfqcRgRXqQYFT5Chlew'
+consumer_key        = 'Qbahe1IG2LNVausVg6dRYJ82T'
+consumer_secret     = 'hAD2DyYTetKyOFiies3mtFkCJHidUMITxoixQpCgbXBBv7lR5B'
+access_token        = '2776468107-B5K2QyBOGpDHkNXRbqPiCD1r0zqLynYRHXzNGxG'
+access_token_secret = 'YcRr86Mqf0gBIe13Gv3tWiipEFUAjaWLu8R1rUtBzjMCS'

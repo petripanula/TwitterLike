@@ -1,0 +1,18 @@
+API key:
+Ftqfp08k9Rs08PXilnpTYnbdP
+
+
+
+API secret key:
+OOmdkFgna3PNvRD9rBnnwgHPcGkA3aglfqcRgRXqQYFT5Chlew
+
+
+Bearer token:
+AAAAAAAAAAAAAAAAAAAAACyeOQEAAAAA2jIFGHccsit0oLzCBGn4ClgjhK4%3DJU607fpfJCnuuHgqGM0rPQvjNO6kh0LkoUrGJw7idER86TQxZ4
+
+
+
+
+RUN:
+sudo update-alternatives --config python
+python3.7 twitter.py

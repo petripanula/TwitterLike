@@ -1,0 +1,189 @@
+
+<!-- saved from url=(0142)https://www.xrptipbot.com/donate/button?to=stedas&network=twitter&amount=0.5&label=null&labelpt=null&unique=null&redirect=null&stylesheet=null -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src="./polyfill.min.js"></script>
+<script src="./fetch.min.js"></script>
+<script>
+    
+    window.addEventListener('message', function(event) {
+      console.log('xrp tipper btn page message event', event)
+      // console.log('btn page message origin', event.origin)
+      // console.log('btn page message data', event.data)
+      if (event.data === 'loggedin') {
+          document.location = document.location + '&canonical=' + encodeURIComponent((window.location != window.parent.location) ? document.referrer: document.location.href)
+      }
+    })
+</script>
+<style>
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+
+    html { box-sizing: border-box; text-align: center;  }
+    *, *:before, *:after { box-sizing: inherit; }
+    html, body { background-color: transparent; padding: 0; margin: 0; color: #fff; }
+
+    body {
+      box-sizing: border-box;
+      min-height: 100vh;
+      font-family: var(--font-face);
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+      justify-content: center;
+      align-items: center;
+      max-width: 450px;
+      margin: 0 auto 0 auto;
+    }
+
+    .button {
+      display: flex;
+      overflow: hidden;
+      margin: 0px;
+      padding: 12px 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 100ms ease-in-out;
+      text-align: center;
+      white-space: nowrap;
+      text-decoration: none !important;
+      text-transform: none;
+      margin: 0px 8px 8px 0px;
+
+      color: #fff; border: 0 none; border-radius: 6px;
+      font-size: 20px; font-weight: 500; line-height: 0.8;
+      -webkit-appearance: none; -moz-appearance: none; appearance: none;
+
+      justify-content: center;
+      align-items: center;
+
+      box-shadow: 3px 3px 13px rgba(0,0,0,.1);
+      transform: scale(.9999999);
+    }
+    .button:hover { 
+        transition: all 100ms ease-in-out; border-color: #2072B1; 
+    }
+    .button:not(.tipped):active { transition: all 75ms ease-in-out; transform: scale(.97); }
+    .button:focus { outline: 1px dotted #959595; outline-offset: -4px; }
+
+    .button.-blue { 
+        color: #fff; background: #2592E6; border: 3px solid #ffffff; 
+        background-image: url('/static/img/logo.png'); background-repeat: no-repeat;
+        background-position: 6px 3px; background-size: 41px;
+        animation: all 1s;
+    }
+    .button.-blue:not(.tipped):hover { 
+        background-position: -16px -13px; 
+        background-size: 80px;   
+        border: 3px solid #1A547F; 
+    }
+    .button.-blue.tipped { 
+        background-size: 0px 0px; 
+        background-size: 0px;
+        cursor: default;
+    }
+    .button.-blue.tipped span { 
+        padding-left: 30px;
+        cursor: default;
+    }
+    
+    .button>span {
+      padding-left: 20px;
+      cursor: pointer;
+      display: inline-block;
+      position: relative;
+      transition: 0.35s;
+    }
+
+    .button>span:after {
+      content: '→';
+      position: absolute;
+      opacity: 0;
+      top: 0;
+      right: -20px;
+      transition: 0.35s;
+    }
+
+    .button:hover>span, .button.tipped>span { padding-right: 20px; }
+    .button:hover>span:after { opacity: 1; right: 0; }
+    .button.tipped>span:after { display: none; }
+    
+    /****************/    
+
+    .button span span.tipped { display: none; }
+    .button.tipped span span.tipped { display: inline-block; }
+    .button.tipped span span.label { display: none; }
+    .button.tipped .checkmark { display: inline-block; opacity: 1; }
+    .button.tipped .checkmark:after { opacity: 1; }
+    .button.tipped.-blue { border: 3px solid #3391E2; background-color: #53A2E7; }
+    
+
+    .checkmark2__circle {
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      stroke-width: 2;
+      stroke-miterlimit: 10;
+      stroke: #fff;
+      fill: none;
+      animation: stroke .6s cubic-bezier(0.650, 0.000, 0.450, 1.000) forwards;
+    }
+
+    .checkmark2 {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: block;
+      stroke-width: 6;
+      stroke: #2592E6;
+      stroke-miterlimit: 10;
+      margin: 10% auto;
+      box-shadow: inset 0px 0px 0px #fff;
+      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+    }
+
+    .checkmark2__check {
+      transform-origin: 50% 50%;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: stroke .3s cubic-bezier(0.650, 0.000, 0.450, 1.000) .8s forwards;
+    }
+
+    @keyframes stroke {
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes scale {
+      0%, 100% {
+        transform: none;
+      }
+      50% {
+        transform: scale3d(1.1, 1.1, 1);
+      }
+    }
+
+    @keyframes fill {
+      100% {
+        box-shadow: inset 0px 0px 0px 30px #fff;
+      }
+    }
+
+</style>
+<link href="./button.css" rel="stylesheet">
+</head>
+<body marginheight="0" data-new-gr-c-s-check-loaded="14.1005.0" data-gr-ext-installed="">
+<script>
+        function openTipBotLogin () {
+                            window.open('https://www.xrptipbot.com/u:stedas/n:twitter')
+                    }
+    </script>
+<div class="button-container" onclick="openTipBotLogin()">
+<div class="button -blue center">
+<span>
+Open Tip Page
+</span>
+</div>
+</div>
+
+</body></html>
