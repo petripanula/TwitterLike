@@ -65,8 +65,9 @@ def set_rules(headers, delete, bearer_token):
     sample_rules = [
         #{"value": "lang:en safemoon -@safemoon_art -ECLIPSETOKEN -pump -join -pumping -pumped -winner -GIVEAWAY -Giving -address -SAFEMARS -donations -donation -telegram -give -follows -safegalaxy -follow -fill -mine -cz_binance -binance -SCAM -is:retweet -has:links", "tag": "safemoon"},
          ##{"value": "lang:en Vechain -@safemoon_art -ECLIPSETOKEN -pump -join -pumping -pumped -winner -Giving -address -SAFEMARS -donations -donation -telegram -give -follows -safegalaxy -follow -fill -mine -cz_binance -binance -SCAM -is:retweet -has:links", "tag": "VET OR VeChain"},
-        #{"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "shib OR pitbullish OR xrp OR safemoon OR feg OR HOGE OR ERC20 OR DOGE"},
-        {"value": "lang:en (cryptocurrency OR altseason) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "cryptocurrency OR altseason"},
+        {"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "shib OR pitbullish OR xrp OR safemoon OR feg OR HOGE OR ERC20 OR DOGE"},
+        #{"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish OR MONA OR HOGE OR CUMMIES OR DOGGY OR LOWB OR PEPECASH OR KANGAL OR BabyDoge OR safemars OR TKING OR EDOGE) -@safemoon_art -ECLIPSETOKEN -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -price -is:retweet -has:links", "tag": "SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish OR MONA OR HOGE OR CUMMIES OR DOGGY OR LOWB OR PEPECASH OR KANGAL OR BabyDoge OR TKING OR EDOGE"},
+        #{"value": "lang:en (cryptocurrency OR altseason) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "cryptocurrency OR altseason"},
     ]
     payload = {"add": sample_rules}
     response = requests.post(
@@ -81,7 +82,7 @@ def set_rules(headers, delete, bearer_token):
     print(json.dumps(response.json()))
 
 
-def get_24h_likes(NBR_LIKED_24H_TWEETS):
+def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets):
     global SAVED_EPOCH_TIME
     likes24h = 0    
     current_epoch=int(time.mktime(datetime.now().timetuple()))
@@ -89,7 +90,7 @@ def get_24h_likes(NBR_LIKED_24H_TWEETS):
         if current_epoch < (like+86400):
             likes24h = likes24h + 1
 
-    print("Likes during last 24 hours: %s" %likes24h)
+    print("Likes during last 24 hours: %s received_tweets: %s" %(likes24h,received_tweets))
 
     if(likes24h > 990 and SAVED_EPOCH_TIME < current_epoch):
         print("We should put breaks on...")
@@ -259,6 +260,10 @@ def like_tweet(tweet_id):
 
     if response.status_code != 200:
         print("Like request returned an error: {} {}".format(response.status_code, response.text))
+        skip_pause = 0
+        if "This tweet cannot be found" in response.text:
+            print("This tweet cannot be found...")
+            skip_pause = 1
         if "Rate limit" in response.text:
             print("Rate limit...")
         if "Too Many Requests" in response.text:
@@ -268,10 +273,12 @@ def like_tweet(tweet_id):
                 sys.exit(0)
 
         print(response.headers)
-        reset_epoch_time=response.headers['x-rate-limit-reset']
-        ts = datetime.fromtimestamp(int(reset_epoch_time)).strftime('%Y-%m-%d %H:%M:%S')
-        print("Current rate limit will reset at %s" %ts)
-        SAVED_EPOCH_TIME = reset_epoch_time
+
+        if skip_pause == 0:
+            reset_epoch_time=response.headers['x-rate-limit-reset']
+            ts = datetime.fromtimestamp(int(reset_epoch_time)).strftime('%Y-%m-%d %H:%M:%S')
+            print("Current rate limit will reset at %s" %ts)
+            SAVED_EPOCH_TIME = reset_epoch_time
         """        
         print("Let's try to switch version...")
         if VERSION == 2:
@@ -406,10 +413,10 @@ def get_user_followers(headers,userid):
             
     return followers, friends, joined
 
-def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS):
+def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, received_tweets):
     global SAVED_EPOCH_TIME
     while True:
-        likes24h = get_24h_likes(NBR_LIKED_24H_TWEETS)
+        likes24h = get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets)
         current_epoch=time.mktime(datetime.now().timetuple())
         if  int(current_epoch) < int(SAVED_EPOCH_TIME):
             ts1 = datetime.fromtimestamp(int(current_epoch)).strftime('%Y-%m-%d %H:%M:%S')
@@ -422,6 +429,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS):
             time.sleep(60)
             continue
         try:
+            print("We send the http get...")
             response = requests.get(
                 "https://api.twitter.com/2/tweets/search/stream?expansions=author_id", headers=headers, stream=True,
             )
@@ -439,6 +447,11 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS):
 
             for response_line in response.iter_lines():
                 if response_line:
+                    received_tweets = received_tweets + 1
+                    with open('nbr_tweets.txt', 'wb') as fp:
+                        pickle.dump(received_tweets, fp)
+
+                    print("received_tweets: %s" %received_tweets)
                     json_response = json.loads(response_line)
                     json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
                     #print(json_dump)
@@ -508,7 +521,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS):
                                     with open('nbr_liked.txt', 'wb') as fp:
                                         pickle.dump(NBR_LIKED_24H_TWEETS, fp)
 
-                                    get_24h_likes(NBR_LIKED_24H_TWEETS)
+                                    get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets)
                                 else:
                                     print("We do not add this user to author list")
                             if tweet_user_id in AUTHOR_LIST and add_to_author_list == 0:
@@ -546,8 +559,24 @@ def main():
     
     #get_rate_limits_v11()
     #print("Script started: %s" % BEGIN_TIME)
-    #sys.exit(0)
+    sys.exit(0)
+
+    #with open('nbr_tweets.txt', 'wb') as fp:
+    #    pickle.dump(0, fp)
+                        
+    with open('nbr_tweets.txt', 'rb') as fp:
+        received_tweets = pickle.load(fp)
+
+    #MONTHLY TWEET CAP USAGE Resets on August 8 at 00:00 UTC
+    if int(datetime.today().strftime('%d')) == 8 and received_tweets > 50000:
+        print("We reset the received tweets counter")
+        received_tweets = 0
+        with open('nbr_tweets.txt', 'wb') as fp:
+            pickle.dump(received_tweets, fp)
     
+    if datetime.today().strftime('%d') == 10:
+        print("We reset the received tweets counter")
+        
     with open ('likelist.txt', 'rb') as fp:
         AUTHOR_LIST = pickle.load(fp)
         print("AUTHOR_LIST len: %s" % len(AUTHOR_LIST))
@@ -592,7 +621,7 @@ def main():
         pickle.dump(NBR_LIKED_24H_TWEETS, fp)
 
     set = set_rules(headers, delete, bearer_token)
-    get_stream(headers, set, bearer_token,AUTHOR_LIST,NBR_LIKED_24H_TWEETS)
+    get_stream(headers, set, bearer_token,AUTHOR_LIST,NBR_LIKED_24H_TWEETS,received_tweets)
 
 
 if __name__ == "__main__":
