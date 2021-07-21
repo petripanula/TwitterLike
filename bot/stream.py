@@ -6,7 +6,9 @@ import string
 import time
 import random
 import pickle
+import logging
 from datetime import datetime
+from datetime import date
 from requests_oauthlib import OAuth1Session
 
 # To set your enviornment variables in your terminal run the following line:
@@ -23,6 +25,22 @@ VERSION = 2
 SAVED_EPOCH_TIME = 0
 BEGIN_TIME = datetime. now()
 
+def setup_custom_logger(name):
+    ''' my custom logger '''
+    formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+    today = date.today()
+    d1 = today.strftime("%d_%m_%Y_")
+    handler = logging.FileHandler(d1+'log.txt', mode='a')
+    handler.setFormatter(formatter)
+    screen_handler = logging.StreamHandler(stream=sys.stdout)
+    screen_handler.setFormatter(formatter)
+    mylogger = logging.getLogger(name)
+    mylogger.setLevel(logging.DEBUG)
+    mylogger.addHandler(handler)
+    mylogger.addHandler(screen_handler)
+    return mylogger
+
 def create_headers(bearer_token):
     headers = {"Authorization": "Bearer {}".format(bearer_token)}
     return headers
@@ -36,7 +54,8 @@ def get_rules(headers, bearer_token):
         raise Exception(
             "Cannot get rules (HTTP {}): {}".format(response.status_code, response.text)
         )
-    print(json.dumps(response.json()))
+    LOGGER.info(json.dumps(response.json()))
+    #print(json.dumps(response.json()))
     return response.json()
 
 
@@ -57,17 +76,15 @@ def delete_all_rules(headers, bearer_token, rules):
                 response.status_code, response.text
             )
         )
-    print(json.dumps(response.json()))
+    LOGGER.info(json.dumps(response.json()))
+    #print(json.dumps(response.json()))
 
 
 def set_rules(headers, delete, bearer_token):
     # You can adjust the rules if needed
     sample_rules = [
-        #{"value": "lang:en safemoon -@safemoon_art -ECLIPSETOKEN -pump -join -pumping -pumped -winner -GIVEAWAY -Giving -address -SAFEMARS -donations -donation -telegram -give -follows -safegalaxy -follow -fill -mine -cz_binance -binance -SCAM -is:retweet -has:links", "tag": "safemoon"},
-         ##{"value": "lang:en Vechain -@safemoon_art -ECLIPSETOKEN -pump -join -pumping -pumped -winner -Giving -address -SAFEMARS -donations -donation -telegram -give -follows -safegalaxy -follow -fill -mine -cz_binance -binance -SCAM -is:retweet -has:links", "tag": "VET OR VeChain"},
-        {"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "shib OR pitbullish OR xrp OR safemoon OR feg OR HOGE OR ERC20 OR DOGE"},
-        #{"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish OR MONA OR HOGE OR CUMMIES OR DOGGY OR LOWB OR PEPECASH OR KANGAL OR BabyDoge OR safemars OR TKING OR EDOGE) -@safemoon_art -ECLIPSETOKEN -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -price -is:retweet -has:links", "tag": "SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish OR MONA OR HOGE OR CUMMIES OR DOGGY OR LOWB OR PEPECASH OR KANGAL OR BabyDoge OR TKING OR EDOGE"},
-        #{"value": "lang:en (cryptocurrency OR altseason) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "cryptocurrency OR altseason"},
+        {"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -wallet -is:retweet -has:links", "tag": "shib OR pitbullish OR xrp OR safemoon OR feg OR HOGE OR ERC20 OR DOGE"},
+        #{"value": "lang:en (cryptocurrency OR altseason OR BTC) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "cryptocurrency OR altseason"},
     ]
     payload = {"add": sample_rules}
     response = requests.post(
@@ -79,7 +96,8 @@ def set_rules(headers, delete, bearer_token):
         raise Exception(
             "Cannot add rules (HTTP {}): {}".format(response.status_code, response.text)
         )
-    print(json.dumps(response.json()))
+    LOGGER.info(json.dumps(response.json()))
+    #print(json.dumps(response.json()))
 
 
 def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets):
@@ -90,11 +108,16 @@ def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets):
         if current_epoch < (like+86400):
             likes24h = likes24h + 1
 
-    print("Likes during last 24 hours: %s received_tweets: %s" %(likes24h,received_tweets))
+    LOG = "Likes during last 24 hours: %s received_tweets: %s" %(likes24h,received_tweets)
+    LOGGER.info(LOG)
+    #print("Likes during last 24 hours: %s received_tweets: %s" %(likes24h,received_tweets))
 
     if(likes24h > 990 and SAVED_EPOCH_TIME < current_epoch):
-        print("We should put breaks on...")
-        print("Script started: %s" % BEGIN_TIME)
+        LOGGER.info("We should put breaks on...")
+        #print("We should put breaks on...")
+        LOG = "Script started: %s" % BEGIN_TIME
+        LOGGER.info(LOG)
+        #print("Script started: %s" % BEGIN_TIME)
         current_epoch=time.mktime(datetime.now().timetuple())
         SAVED_EPOCH_TIME = current_epoch + 900 #Just 15min break?
 
@@ -110,9 +133,10 @@ def get_followers_list_v11():
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        print(
-            "There may have been an issue with the consumer_key or consumer_secret you entered."
-        )
+        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        #print(
+        #    "There may have been an issue with the consumer_key or consumer_secret you entered."
+        #)
     resource_owner_key = fetch_response.get("oauth_token")
     resource_owner_secret = fetch_response.get("oauth_token_selfecret")
     #print("Got OAuth token: %s" % resource_owner_key)
@@ -147,12 +171,14 @@ def get_followers_list_v11():
             json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
             followers=json.dumps(json_response["ids"])
             #print(json_dump)
-            print(followers)
+            LOGGER.info(followers)
+            #print(followers)
 
     followers=followers.strip('[')
     followers=followers.strip(']')
     MY_FOLLOWERS_LIST = followers.split(",")
-    print(MY_FOLLOWERS_LIST)
+    LOGGER.info(MY_FOLLOWERS_LIST)
+    #print(MY_FOLLOWERS_LIST)
 
     with open('my_followers.txt', 'wb') as fp:
         pickle.dump(MY_FOLLOWERS_LIST, fp)    
@@ -168,9 +194,10 @@ def get_rate_limits_v11():
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        print(
-            "There may have been an issue with the consumer_key or consumer_secret you entered."
-        )
+        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        #print(
+        #    "There may have been an issue with the consumer_key or consumer_secret you entered."
+        #)
     resource_owner_key = fetch_response.get("oauth_token")
     resource_owner_secret = fetch_response.get("oauth_token_selfecret")
     #print("Got OAuth token: %s" % resource_owner_key)
@@ -197,7 +224,8 @@ def get_rate_limits_v11():
      
     response = oauth.get(url)
     json_response = response.json()
-    print(json.dumps(json_response, indent=4, sort_keys=True))
+    LOGGER.info(json.dumps(json_response, indent=4, sort_keys=True))
+    #print(json.dumps(json_response, indent=4, sort_keys=True))
         
 
     
@@ -212,7 +240,9 @@ def like_tweet(tweet_id):
     if  int(current_epoch) < int(SAVED_EPOCH_TIME):
         ts1 = datetime.fromtimestamp(int(current_epoch)).strftime('%Y-%m-%d %H:%M:%S')
         ts2 = datetime.fromtimestamp(int(SAVED_EPOCH_TIME)).strftime('%Y-%m-%d %H:%M:%S')
-        print("We return due to limit %s < %s" % (ts1,ts2))
+        LOG = "We return due to limit %s < %s" % (ts1,ts2)
+        LOGGER.info(LOG)
+        #print("We return due to limit %s < %s" % (ts1,ts2))
         return 1
     
     consumer_key = os.environ.get("CONSUMER_KEY")
@@ -223,9 +253,10 @@ def like_tweet(tweet_id):
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        print(
-            "There may have been an issue with the consumer_key or consumer_secret you entered."
-        )
+        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        #print(
+        #    "There may have been an issue with the consumer_key or consumer_secret you entered."
+        #)
     #resource_owner_key = fetch_response.get("oauth_token")
     #resource_owner_secret = fetch_response.get("oauth_token_selfecret")
     #print("Got OAuth token: %s" % resource_owner_key)
@@ -254,30 +285,40 @@ def like_tweet(tweet_id):
         VERSION = 2
         response = oauth.post("https://api.twitter.com/2/users/{}/likes".format(MY_TWITTER_ID), json=payload)
     else:
-        print("We use v1")
+        LOGGER.info("We use v1")
+        #print("We use v1")
         VERSION = 1
         response = oauth.post(url, json=payload)
 
     if response.status_code != 200:
-        print("Like request returned an error: {} {}".format(response.status_code, response.text))
+        LOG = "Like request returned an error: {} {}".format(response.status_code, response.text)
+        LOGGER.info(LOG)
+        #print("Like request returned an error: {} {}".format(response.status_code, response.text))
         skip_pause = 0
         if "This tweet cannot be found" in response.text:
-            print("This tweet cannot be found...")
+            LOGGER.info("This tweet cannot be found...")
+            #print("This tweet cannot be found...")
             skip_pause = 1
         if "Rate limit" in response.text:
-            print("Rate limit...")
+            LOGGER.info("Rate limit...")
+            #print("Rate limit...")
         if "Too Many Requests" in response.text:
-            print("Too Many Requests...")
+            LOGGER.info("Too Many Requests...")
+            #print("Too Many Requests...")
         if "Internal Server Error" in response.text:
-                print("Internal Server Error...")
+                LOGGER.info("Internal Server Error...")
+                #print("Internal Server Error...")
                 sys.exit(0)
 
-        print(response.headers)
+        LOGGER.info(response.headers)
+        #print(response.headers)
 
         if skip_pause == 0:
             reset_epoch_time=response.headers['x-rate-limit-reset']
             ts = datetime.fromtimestamp(int(reset_epoch_time)).strftime('%Y-%m-%d %H:%M:%S')
-            print("Current rate limit will reset at %s" %ts)
+            LOG = "Current rate limit will reset at %s" %ts
+            LOGGER.info(LOG)
+            #print("Current rate limit will reset at %s" %ts)
             SAVED_EPOCH_TIME = reset_epoch_time
         """        
         print("Let's try to switch version...")
@@ -291,25 +332,34 @@ def like_tweet(tweet_id):
         if ERRORS > 5:
             now = datetime.now()
             current_time = now.strftime("%H:%M:%S")
-            print("Current Time =", current_time)
+            LOG = "Current Time =", current_time
+            LOGGER.info(LOG)
+            #print("Current Time =", current_time)
             START_TIME_LIMIT = time.time()
             ERRORS = 0
         return 1
     else:
         ERRORS = 0
-        print("Response code: {}".format(response.status_code))
-
+        LOG = "Response code: {}".format(response.status_code)
+        LOGGER.info(LOG)
+        #print("Response code: {}".format(response.status_code))
 
         if "x-rate-limit-remaining" not in response.headers:
-            print("no x-rate-limit-remaining in response")
+            LOGGER.info("no x-rate-limit-remaining in response")
+            #print("no x-rate-limit-remaining in response")
             return 1
                     
         x_rate_limit_remaining = response.headers['x-rate-limit-remaining']
-        print("like_tweet - x_rate_limit_remaining: %s" % x_rate_limit_remaining)
+        LOG = "like_tweet - x_rate_limit_remaining: %s" % x_rate_limit_remaining
+        LOGGER.info(LOG)        
+        #print("like_tweet - x_rate_limit_remaining: %s" % x_rate_limit_remaining)
 
         if int(x_rate_limit_remaining) < 5:
-            print("Let's slow down a bit")
-            print("Script started: %s" % BEGIN_TIME)
+            #print("Let's slow down a bit")
+            LOGGER.info("Let's slow down a bit")
+            LOG = "Script started: %s" % BEGIN_TIME
+            LOGGER.info(LOG)
+            #print("Script started: %s" % BEGIN_TIME)
             current_epoch=time.mktime(datetime.now().timetuple())
             SAVED_EPOCH_TIME = current_epoch + 120 #Just 2 min break
             
@@ -331,7 +381,9 @@ def get_user_followers(headers,userid):
     if  int(current_epoch) < int(SAVED_EPOCH_TIME):
         ts1 = datetime.fromtimestamp(int(current_epoch)).strftime('%Y-%m-%d %H:%M:%S')
         ts2 = datetime.fromtimestamp(int(SAVED_EPOCH_TIME)).strftime('%Y-%m-%d %H:%M:%S')
-        print("We return due to limit %s < %s" % (ts1,ts2))
+        LOG = "We return due to limit %s < %s" % (ts1,ts2)
+        LOGGER.info(LOG)
+        #print("We return due to limit %s < %s" % (ts1,ts2))
         return followers, friends, joined
     
     followers = 0
@@ -345,9 +397,10 @@ def get_user_followers(headers,userid):
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        print(
-            "There may have been an issue with the consumer_key or consumer_secret you entered."
-        )
+        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        #print(
+        #    "There may have been an issue with the consumer_key or consumer_secret you entered."
+        #)
     with open('auth.json') as json_file:
         oauth_tokens = json.load(json_file)
 
@@ -370,27 +423,38 @@ def get_user_followers(headers,userid):
     #response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
-        print("Followers get returned error (HTTP {}): {}".format(response.status_code, response.text))
+        LOG = "Followers get returned error (HTTP {}): {}".format(response.status_code, response.text)
+        LOGGER.err(LOG)
+        #print("Followers get returned error (HTTP {}): {}".format(response.status_code, response.text))
 
-        print(response.headers)
+        LOGGER.info(response.headers)
+        #print(response.headers)
         reset_epoch_time=response.headers['x-rate-limit-reset']
         ts = datetime.fromtimestamp(int(reset_epoch_time)).strftime('%Y-%m-%d %H:%M:%S')
-        print("Current rate limit will reset at %s" %ts)
+        LOG = "Current rate limit will reset at %s" %ts
+        LOGGER.info(LOG)
+        #print("Current rate limit will reset at %s" %ts)
         SAVED_EPOCH_TIME = reset_epoch_time
         return followers, friends, joined
 
 
     if "x-rate-limit-remaining" not in response.headers:
-        print("no x-rate-limit-remaining is header")
+        LOGGER.info("no x-rate-limit-remaining is header")
+        #print("no x-rate-limit-remaining is header")
         return followers, friends, joined
     
     x_rate_limit_remaining = response.headers['x-rate-limit-remaining']
     if int(x_rate_limit_remaining) < 100:
-        print("get_user_followers - x_rate_limit_remaining: %s" % x_rate_limit_remaining)
+        LOG = "get_user_followers - x_rate_limit_remaining: %s" % x_rate_limit_remaining
+        LOGGER.info(LOG)
+        #print("get_user_followers - x_rate_limit_remaining: %s" % x_rate_limit_remaining)
     
     if int(x_rate_limit_remaining) < 5:
-        print("Let's slow down a bit")
-        print("Script started: %s" % BEGIN_TIME)
+        LOGGER.info("Let's slow down a bit")
+        #print("Let's slow down a bit")
+        LOG = "Script started: %s" % BEGIN_TIME
+        LOGGER.info(LOG)        
+        #print("Script started: %s" % BEGIN_TIME)
         current_epoch=time.mktime(datetime.now().timetuple())
         SAVED_EPOCH_TIME = current_epoch + 60 #Just 1 min break
 
@@ -398,7 +462,8 @@ def get_user_followers(headers,userid):
         if response_line:
             json_response = json.loads(response_line)
             if "data" not in json.dumps(json_response):
-                print("No data in json!")
+                LOGGER.info("No data in json!")
+                #print("No data in json!")
                 break
             json_response = json.loads(response_line)
             json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
@@ -415,34 +480,67 @@ def get_user_followers(headers,userid):
 
 def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, received_tweets):
     global SAVED_EPOCH_TIME
+    at_the_begin = 1
     while True:
+        if at_the_begin == 1:
+            at_the_begin = 0
+            my_followers_at_start,friends,joined = get_user_followers(headers,MY_TWITTER_ID)
+            LOG = "My followers count at the begin: %s" %my_followers_at_start
+            LOGGER.info(LOG)
+            #print("My followers count at the begin: %s" %my_followers_at_start)
+            received_tweets_start = received_tweets
+
+        if received_tweets > received_tweets_start + 1000:
+            my_followers_now,friends,joined = get_user_followers(headers,MY_TWITTER_ID)
+            received_tweets_start = received_tweets
+            if my_followers_now <= my_followers_at_start:
+                LOG = "My followers count at the begin: %s now: %s" % (my_followers_at_start, my_followers_now)
+                LOGGER.info(LOG)
+                #print("My followers count at the begin: %s now: %s" % (my_followers_at_start, my_followers_now))
+                current_epoch=time.mktime(datetime.now().timetuple())
+                LOGGER.info("No new followers so we should wait over 1 hour now *****************************************************************")
+                #print("No new followers so we should wait over 1 hour now *****************************************************************")
+                SAVED_EPOCH_TIME = current_epoch + 3600
+            my_followers_at_start = my_followers_now
+        
         likes24h = get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets)
         current_epoch=time.mktime(datetime.now().timetuple())
         if  int(current_epoch) < int(SAVED_EPOCH_TIME):
             ts1 = datetime.fromtimestamp(int(current_epoch)).strftime('%Y-%m-%d %H:%M:%S')
             ts2 = datetime.fromtimestamp(int(SAVED_EPOCH_TIME)).strftime('%Y-%m-%d %H:%M:%S')
-            print("We do not reconnect yet %s < %s" % (ts1,ts2))
+            LOG = "We do not reconnect yet %s < %s" % (ts1,ts2)
+            LOGGER.info(LOG)
+            #print("We do not reconnect yet %s < %s" % (ts1,ts2))
             time.sleep(60)
             continue
         if likes24h > 990:
-            print("We do not reconnect yet due to likes: %s" % likes24h)
+            LOG = "We do not reconnect yet due to likes: %s" % likes24h
+            LOGGER.info(LOG)
+            #print("We do not reconnect yet due to likes: %s" % likes24h)
             time.sleep(60)
             continue
         try:
-            print("We send the http get...")
+            #print("We send the http get...")
+            LOGGER.info("We send the http get...")
             response = requests.get(
                 "https://api.twitter.com/2/tweets/search/stream?expansions=author_id", headers=headers, stream=True,
             )
-            print("HTTP GET stream response code: %s" %response.status_code)
+            LOG = "HTTP GET stream response code: %s" %response.status_code
+            LOGGER.info(LOG)
+            #print("HTTP GET stream response code: %s" %response.status_code)
             if response.status_code != 200:
-                print("resp: %s %s" % (response.status_code, response.text))
+                LOG = "resp: %s %s" % (response.status_code, response.text)
+                LOGGER.info(LOG)
+                #print("resp: %s %s" % (response.status_code, response.text))
                 if "This stream is currently at the maximum allowed connection limit" in response.text:
-                    print("We sleep 60 seconds and reconnect...")
+                    LOGGER.info("We sleep 60 seconds and reconnect...")
+                    #print("We sleep 60 seconds and reconnect...")
                     response.connection.close()
                     time.sleep(60)
                     continue
                 else:
-                    print("We make the exit....")
+                    LOGGER.info("We make the exit....")
+                    #print("We make the exit....")
                     sys.exit(0)
 
             for response_line in response.iter_lines():
@@ -451,7 +549,10 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                     with open('nbr_tweets.txt', 'wb') as fp:
                         pickle.dump(received_tweets, fp)
 
-                    print("received_tweets: %s" %received_tweets)
+                    if int(received_tweets % 10 == 0):
+                        LOG = "received_tweets: %s" %received_tweets
+                        LOGGER.info(LOG)
+                        #print("received_tweets: %s" %received_tweets)
                     json_response = json.loads(response_line)
                     json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
                     #print(json_dump)
@@ -468,7 +569,8 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                     #if negative == 0 and random_nbr==5:
 
                     if "data" not in json.dumps(json_response):
-                        print("No data in json!")
+                        LOGGER.info("No data in json!")
+                        #print("No data in json!")
                         continue
 
                     if negative == 0:
@@ -480,7 +582,8 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                         #print("Tweet ID: %s" %tweet_id)
 
                         if tweet_user_id in MY_FOLLOWERS_LIST:
-                            print("************** Already my follower **********************")
+                            LOGGER.info("************** Already my follower **********************")
+                            #print("************** Already my follower **********************")
                             #sys.exit(0)
                         else:
                             #print(json_dump)
@@ -492,7 +595,8 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                             add_to_author_list = 0
 
                             if followers == 99999 and friends == 99999:
-                                print("We try top stop steaming...")
+                                LOGGER.info("We try top stop steaming...")
+                                #print("We try top stop steaming...")
                                 SAVED_EPOCH_TIME = current_epoch + 900 #Just 15min break?
                                 break
                             #Some let's try to catch the new users and remove bots
@@ -503,13 +607,21 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                             #if "2021" in joined and ("Mar" in joined or "Apr" in joined or "May" in joined):
                             if "2021" in joined:
                                 new_user = 1
-                                print("This is a new twitter users...")
+                                LOGGER.info("This is a new twitter users from year 2021")
+                            #else:
+                            #    new_user = 1
 
-                            if(followers < 500 and friends > 0) and tweet_user_id not in AUTHOR_LIST and new_user==1:
+                            #if(followers < 500 and friends > 0) and tweet_user_id not in AUTHOR_LIST and new_user==1:
+                            if followers < 5000 and tweet_user_id not in AUTHOR_LIST and new_user==1:
                                 if(like_tweet(tweet_id)) == 0:
-                                    print("User ID: %s" %tweet_user_id)
-                                    print("Tweet ID: %s" %tweet_id)
-                                    print("We add this user to author list")
+                                    LOG = "User ID: %s" %tweet_user_id
+                                    LOGGER.info(LOG)
+                                    #print("User ID: %s" %tweet_user_id)
+                                    LOG = "Tweet ID: %s" %tweet_id
+                                    LOGGER.info(LOG)
+                                    #print("Tweet ID: %s" %tweet_id)
+                                    LOGGER.info("We add this user to author list")
+                                    #print("We add this user to author list")
                                     add_to_author_list = 1
                                     AUTHOR_LIST.append(tweet_user_id)
                                     #print(AUTHOR_LIST)
@@ -523,32 +635,47 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
 
                                     get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets)
                                 else:
-                                    print("We do not add this user to author list")
+                                    LOGGER.info("We do not add this user to author list")
+                                    #print("We do not add this user to author list")
                             if tweet_user_id in AUTHOR_LIST and add_to_author_list == 0:
-                                print("Liked already this user...")
+                                LOGGER.info("Liked already this user...")
+                                #print("Liked already this user...")
 
-            print("End of for loop!!")
+            #print("End of for loop!!")
+            LOGGER.info("End of for loop!!")
             response.connection.close()
             pass
         except requests.exceptions.ChunkedEncodingError:
-            print("************* ChunkedEncodingError")
-            print("Script started: %s" % BEGIN_TIME)
-            print("We close connection and sleep 10 seconds and reconnect...")
+            LOGGER.err("************* ChunkedEncodingError")
+            #print("************* ChunkedEncodingError")
+            LOG = "Script started: %s" % BEGIN_TIME
+            LOGGER.info(LOG)
+            #print("Script started: %s" % BEGIN_TIME)
+            LOGGER.info("We close connection and sleep 10 seconds and reconnect...")
+            #print("We close connection and sleep 10 seconds and reconnect...")
             response.connection.close()
             time.sleep(10)
             pass
         except requests.exceptions.RequestException as e:
-            print("Request exception `{}`, exiting".format(e))
-            print("Script started: %s" % BEGIN_TIME)
-            print("We close connection and sleep 10 seconds and reconnect...")
+            LOG = "Request exception `{}`, exiting".format(e)
+            LOGGER.err(LOG)
+            #print("Request exception `{}`, exiting".format(e))
+            LOG = "Script started: %s" % BEGIN_TIME
+            LOGGER.info(LOG)
+            #print("Script started: %s" % BEGIN_TIME)
+            LOGGER.info("We close connection and sleep 10 seconds and reconnect...")
+            #print("We close connection and sleep 10 seconds and reconnect...")
             response.connection.close()
             time.sleep(10)
             pass
-        
+
+LOGGER = setup_custom_logger('twitter')
+
 def main():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
+    LOG = "Current Time =", current_time
+    LOGGER.info(LOG)
     bearer_token = os.environ.get("BEARER_TOKEN")    
     headers = create_headers(bearer_token)
     rules = get_rules(headers, bearer_token)
@@ -559,7 +686,7 @@ def main():
     
     #get_rate_limits_v11()
     #print("Script started: %s" % BEGIN_TIME)
-    sys.exit(0)
+    #sys.exit(0)
 
     #with open('nbr_tweets.txt', 'wb') as fp:
     #    pickle.dump(0, fp)
@@ -569,27 +696,30 @@ def main():
 
     #MONTHLY TWEET CAP USAGE Resets on August 8 at 00:00 UTC
     if int(datetime.today().strftime('%d')) == 8 and received_tweets > 50000:
-        print("We reset the received tweets counter")
+        LOGGER.info("We reset the received tweets counter")
         received_tweets = 0
         with open('nbr_tweets.txt', 'wb') as fp:
             pickle.dump(received_tweets, fp)
     
-    if datetime.today().strftime('%d') == 10:
-        print("We reset the received tweets counter")
-        
     with open ('likelist.txt', 'rb') as fp:
         AUTHOR_LIST = pickle.load(fp)
-        print("AUTHOR_LIST len: %s" % len(AUTHOR_LIST))
+        LOG = "AUTHOR_LIST len: %s" % len(AUTHOR_LIST)
+        LOGGER.debug(LOG)
+        #print("AUTHOR_LIST len: %s" % len(AUTHOR_LIST))
 
     with open('my_followers.txt', 'rb') as fp:
         MY_FOLLOWERS_LIST = pickle.load(fp)
-        print("MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST))
+        LOG = "MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST)
+        LOGGER.debug(LOG)
+        #print("MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST))
 
     with open('nbr_liked.txt', 'rb') as fp:
         NBR_LIKED_24H_TWEETS = pickle.load(fp)
         #print("NBR_LIKED_24H_TWEETS len: %s" % len(NBR_LIKED_24H_TWEETS))
 
-    print("24h like array size before remove: %s" %len(NBR_LIKED_24H_TWEETS))
+    LOG = "24h like array size before remove: %s" %len(NBR_LIKED_24H_TWEETS)
+    LOGGER.info(LOG)
+    #print("24h like array size before remove: %s" %len(NBR_LIKED_24H_TWEETS))
     likes24h = 0
     removed_likes24h = 0
     my_ctr = 0
@@ -599,22 +729,31 @@ def main():
     for like in NBR_LIKED_24H_TWEETS[:]:  #Copy of NBR_LIKED_24H_TWEETS object
         my_ctr = my_ctr + 1
         if debug_remove == 1:
-            print("%s: %s: %s <> %s" %(my_ctr, current_epoch, like, (int(like)+86400)))
+            LOG = "%s: %s: %s <> %s" %(my_ctr, current_epoch, like, (int(like)+86400))
+            LOGGER.debug(LOG)
+            #print("%s: %s: %s <> %s" %(my_ctr, current_epoch, like, (int(like)+86400)))
             ts1 = datetime.fromtimestamp(current_epoch).strftime('%Y-%m-%d %H:%M:%S')
             ts2 = datetime.fromtimestamp(like).strftime('%Y-%m-%d %H:%M:%S')
             ts3 = datetime.fromtimestamp((like+86400)).strftime('%Y-%m-%d %H:%M:%S')
-            print("%s: %s < %s" %(my_ctr, ts1, ts3))
+            LOG = "%s: %s < %s" %(my_ctr, ts1, ts3)
+            LOGGER.debug(LOG)
+            #print("%s: %s < %s" %(my_ctr, ts1, ts3))
         
         if current_epoch < (like+86400):
             likes24h = likes24h + 1
         else:
             if debug_remove == 1:
-                print("This should be removed")
+                LOGGER.info("This should be removed")
+                #print("This should be removed")
             NBR_LIKED_24H_TWEETS.remove(like)
             removed_likes24h = removed_likes24h +1
-            
-    print("Removed likes: %s. 24h like array size after remove: %s" %( removed_likes24h, len(NBR_LIKED_24H_TWEETS)))
-    print("Likes during last 24 hours: %s" %likes24h)
+
+    LOG = "Removed likes: %s. 24h like array size after remove: %s" %( removed_likes24h, len(NBR_LIKED_24H_TWEETS))
+    LOGGER.info(LOG)
+    #print("Removed likes: %s. 24h like array size after remove: %s" %( removed_likes24h, len(NBR_LIKED_24H_TWEETS)))
+    LOG = "Likes during last 24 hours: %s" %likes24h
+    LOGGER.info(LOG)
+    #print("Likes during last 24 hours: %s" %likes24h)
 
     NBR_LIKED_24H_TWEETS.sort()
     with open('nbr_liked.txt', 'wb') as fp:
