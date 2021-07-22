@@ -133,7 +133,7 @@ def get_followers_list_v11():
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        LOGGER.error("There may have been an issue with the consumer_key or consumer_secret you entered.")
         #print(
         #    "There may have been an issue with the consumer_key or consumer_secret you entered."
         #)
@@ -194,7 +194,7 @@ def get_rate_limits_v11():
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        LOGGER.error("There may have been an issue with the consumer_key or consumer_secret you entered.")
         #print(
         #    "There may have been an issue with the consumer_key or consumer_secret you entered."
         #)
@@ -253,7 +253,7 @@ def like_tweet(tweet_id):
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        LOGGER.error("There may have been an issue with the consumer_key or consumer_secret you entered.")
         #print(
         #    "There may have been an issue with the consumer_key or consumer_secret you entered."
         #)
@@ -397,7 +397,7 @@ def get_user_followers(headers,userid):
     try:
         fetch_response = oauth.fetch_request_token(request_token_url)
     except ValueError:
-        LOGGER.err("There may have been an issue with the consumer_key or consumer_secret you entered.")
+        LOGGER.error("There may have been an issue with the consumer_key or consumer_secret you entered.")
         #print(
         #    "There may have been an issue with the consumer_key or consumer_secret you entered."
         #)
@@ -424,7 +424,7 @@ def get_user_followers(headers,userid):
 
     if response.status_code != 200:
         LOG = "Followers get returned error (HTTP {}): {}".format(response.status_code, response.text)
-        LOGGER.err(LOG)
+        LOGGER.error(LOG)
         #print("Followers get returned error (HTTP {}): {}".format(response.status_code, response.text))
 
         LOGGER.info(response.headers)
@@ -646,7 +646,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
             response.connection.close()
             pass
         except requests.exceptions.ChunkedEncodingError:
-            LOGGER.err("************* ChunkedEncodingError")
+            LOGGER.error("************* ChunkedEncodingError")
             #print("************* ChunkedEncodingError")
             LOG = "Script started: %s" % BEGIN_TIME
             LOGGER.info(LOG)
@@ -658,7 +658,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
             pass
         except requests.exceptions.RequestException as e:
             LOG = "Request exception `{}`, exiting".format(e)
-            LOGGER.err(LOG)
+            LOGGER.error(LOG)
             #print("Request exception `{}`, exiting".format(e))
             LOG = "Script started: %s" % BEGIN_TIME
             LOGGER.info(LOG)
