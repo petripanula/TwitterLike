@@ -15,6 +15,7 @@ from requests_oauthlib import OAuth1Session
 # export 'BEARER_TOKEN'='<your_bearer_token>'
 
 MY_TWITTER_ID = "2776468107"
+MOBILE_DONK_ID = "1416302384393953282"
 
 NEGATIVE_WORDS = ["pumped", "PUMPED", "PUMPING", "pumping", "Giving", "winners", "group", "follows", "follow", "Join"]
 AUTHOR_LIST = []
@@ -83,8 +84,8 @@ def delete_all_rules(headers, bearer_token, rules):
 def set_rules(headers, delete, bearer_token):
     # You can adjust the rules if needed
     sample_rules = [
-        {"value": "lang:en (SHIB OR safemoon OR xrp OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -wallet -is:retweet -has:links", "tag": "shib OR pitbullish OR xrp OR safemoon OR feg OR HOGE OR ERC20 OR DOGE"},
-        #{"value": "lang:en (cryptocurrency OR altseason OR BTC) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -is:retweet -has:links", "tag": "cryptocurrency OR altseason"},
+        #{"value": "lang:en (SHIB OR safemoon OR XRP OR AKITA OR FEG OR HOGE OR ERC20 OR DOGE OR pitbullish) -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -pumped -winner -giveaway -Giving -address -follow -help -wallet -is:retweet -has:links", "tag": "shib OR pitbullish OR XRP OR safemoon OR feg OR HOGE OR ERC20 OR DOGE"},
+        {"value": "lang:en (cryptocurrency OR altseason OR BTC OR XRP OR ethereum OR crypto) -pig -CasinoCoin -SHIB -ChumToken -safemoon -akita -feg -doge -hoge -@safemoon_art -ECLIPSETOKEN -SAFEMARS -GIVEAWAY -safetesla -teslasafe -pump -join -pumping -block -version -pumped -price -blocks -value -winner -giveaway -Giving -address -follow -help -unusual -bot -change -funds -pending -transactions -transaction -CryptoSignals -Technical -trade -volume -circulation -stake -WHALEALERT -is:reply -is:retweet -has:links", "tag": ""},
     ]
     payload = {"add": sample_rules}
     response = requests.post(
@@ -100,15 +101,15 @@ def set_rules(headers, delete, bearer_token):
     #print(json.dumps(response.json()))
 
 
-def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets):
+def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets,timerange=86400):
     global SAVED_EPOCH_TIME
     likes24h = 0    
     current_epoch=int(time.mktime(datetime.now().timetuple()))
     for like in NBR_LIKED_24H_TWEETS:
-        if current_epoch < (like+86400):
+        if current_epoch < (like+timerange):
             likes24h = likes24h + 1
 
-    LOG = "Likes during last 24 hours: %s received_tweets: %s" %(likes24h,received_tweets)
+    LOG = "Likes during last %s hours: %s received_tweets: %s" %(int(timerange/3600),likes24h,received_tweets)
     LOGGER.info(LOG)
     #print("Likes during last 24 hours: %s received_tweets: %s" %(likes24h,received_tweets))
 
@@ -176,6 +177,7 @@ def get_followers_list_v11():
 
     followers=followers.strip('[')
     followers=followers.strip(']')
+    followers=followers.strip(' ')
     MY_FOLLOWERS_LIST = followers.split(",")
     LOGGER.info(MY_FOLLOWERS_LIST)
     #print(MY_FOLLOWERS_LIST)
@@ -295,16 +297,16 @@ def like_tweet(tweet_id):
         LOGGER.info(LOG)
         #print("Like request returned an error: {} {}".format(response.status_code, response.text))
         skip_pause = 0
+        if "Service Unavailable" in response.text:
+            LOGGER.info("Service Unavailable...")
+            skip_pause = 1
         if "This tweet cannot be found" in response.text:
             LOGGER.info("This tweet cannot be found...")
-            #print("This tweet cannot be found...")
             skip_pause = 1
         if "Rate limit" in response.text:
             LOGGER.info("Rate limit...")
-            #print("Rate limit...")
         if "Too Many Requests" in response.text:
             LOGGER.info("Too Many Requests...")
-            #print("Too Many Requests...")
         if "Internal Server Error" in response.text:
                 LOGGER.info("Internal Server Error...")
                 #print("Internal Server Error...")
@@ -369,7 +371,35 @@ def like_tweet(tweet_id):
 
     return 0
 
+def check_how_many_like_list_is_in_follower_list():
+    my_count = 0
+    with open ('likelist.txt', 'rb') as fp:
+        AUTHOR_LIST = pickle.load(fp)
+        #print(AUTHOR_LIST)
+        LOG = "AUTHOR_LIST len: %s" % len(AUTHOR_LIST)
+        LOGGER.debug(LOG)
 
+        with open('my_followers.txt', 'rb') as fp:
+            MY_FOLLOWERS_LIST = pickle.load(fp)
+            #print(MY_FOLLOWERS_LIST)
+            LOG = "MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST)
+            LOGGER.debug(LOG)
+
+            for follower in AUTHOR_LIST:
+                print(follower)
+
+            for follower in MY_FOLLOWERS_LIST:
+                follower = follower.strip(' ')
+                #LOG = ":%s:" % follower
+                #LOGGER.debug(LOG)
+                if follower in AUTHOR_LIST:
+                     LOGGER.debug("Follower found in likelist")
+                     my_count = my_count + 1
+
+    LOG = "MY_COUNT: %s" % my_count
+    LOGGER.info(LOG)
+    
+                
 def get_user_followers(headers,userid):
     global START_TIME_LIMIT
     global SAVED_EPOCH_TIME
@@ -378,10 +408,10 @@ def get_user_followers(headers,userid):
     joined = "Tue Apr 06 11:16:49 +0000 2008" 
     current_epoch=time.mktime(datetime.now().timetuple())
     
-    if  int(current_epoch) < int(SAVED_EPOCH_TIME):
+    if  int(current_epoch) < int(SAVED_EPOCH_TIME) and userid != MY_TWITTER_ID:
         ts1 = datetime.fromtimestamp(int(current_epoch)).strftime('%Y-%m-%d %H:%M:%S')
         ts2 = datetime.fromtimestamp(int(SAVED_EPOCH_TIME)).strftime('%Y-%m-%d %H:%M:%S')
-        LOG = "We return due to limit %s < %s" % (ts1,ts2)
+        LOG = "get_user_followers: We return due to limit %s < %s" % (ts1,ts2)
         LOGGER.info(LOG)
         #print("We return due to limit %s < %s" % (ts1,ts2))
         return followers, friends, joined
@@ -478,14 +508,15 @@ def get_user_followers(headers,userid):
             
     return followers, friends, joined
 
-def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, received_tweets):
+def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, received_tweets,MY_FOLLOWERS_LIST):
     global SAVED_EPOCH_TIME
     at_the_begin = 1
+    current_epoch_tmp_saved = 0 
     while True:
         if at_the_begin == 1:
             at_the_begin = 0
             my_followers_at_start,friends,joined = get_user_followers(headers,MY_TWITTER_ID)
-            LOG = "My followers count at the begin: %s" %my_followers_at_start
+            LOG = "*** My followers count at the begin: %s" %my_followers_at_start
             LOGGER.info(LOG)
             #print("My followers count at the begin: %s" %my_followers_at_start)
             received_tweets_start = received_tweets
@@ -546,6 +577,23 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
             for response_line in response.iter_lines():
                 if response_line:
                     received_tweets = received_tweets + 1
+                    
+                    likes1h = get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets,3600)  #Get likes from last hour
+                    LOG = "1 hour likes: %s" %likes1h
+                    LOGGER.info(LOG)
+                    current_epoch_tmp=time.mktime(datetime.now().timetuple())
+                    
+                    if likes1h >= 100 and current_epoch_tmp > current_epoch_tmp_saved + 1800 and 1==2:  #TODO
+                        current_epoch_tmp_saved=time.mktime(datetime.now().timetuple())
+                        my_followers_now,friends,joined = get_user_followers(headers,MY_TWITTER_ID)
+                        if my_followers_now <= my_followers_at_start:
+                            LOG = "* My followers count at the begin: %s now: %s" % (my_followers_at_start, my_followers_now)
+                            LOGGER.info(LOG)
+                            current_epoch=time.mktime(datetime.now().timetuple())
+                            LOGGER.info("* No new followers so we should wait over 1 hour now *****************************************************************")
+                            SAVED_EPOCH_TIME = current_epoch + 3600
+                        my_followers_at_start = my_followers_now
+            
                     with open('nbr_tweets.txt', 'wb') as fp:
                         pickle.dump(received_tweets, fp)
 
@@ -555,7 +603,8 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                         #print("received_tweets: %s" %received_tweets)
                     json_response = json.loads(response_line)
                     json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
-                    #print(json_dump)
+                    number_of_percentages = json_dump.count('%')
+                    #LOGGER.debug(json_dump)
                     #print(len(json.dumps(json_response["data"]["text"])))
                     negative = 0
                     for my_words in NEGATIVE_WORDS:
@@ -578,15 +627,21 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                         tweet_id=tweet_id.strip('"')
                         tweet_user_id=json.dumps(json_response["data"]["author_id"])
                         tweet_user_id=tweet_user_id.strip('"')
-                        #print("User ID: %s" %tweet_user_id)
-                        #print("Tweet ID: %s" %tweet_id)
+                        username=json.dumps(json_response["includes"]["users"][0]["username"])
+                        name=json.dumps(json_response["includes"]["users"][0]["name"])
 
-                        if tweet_user_id in MY_FOLLOWERS_LIST:
+                        bot = 0
+                        if "BOT" in username.upper() or "BOT" in name.upper() or number_of_percentages > 2:
+                            LOGGER.info("************** Possible bot **********************")
+                            LOG = "username: %s name: %s number_of_percentages: %s" % (username,name,number_of_percentages)
+                            LOGGER.info(LOG)
+                            LOGGER.debug(json_dump)
+                            bot = 1
+
+                        if tweet_user_id in MY_FOLLOWERS_LIST and tweet_user_id!=MOBILE_DONK_ID:
                             LOGGER.info("************** Already my follower **********************")
-                            #print("************** Already my follower **********************")
                             #sys.exit(0)
                         else:
-                            #print(json_dump)
                             followers,friends,joined = get_user_followers(headers,tweet_user_id)
                             followers = int(followers)
                             friends = int(friends)
@@ -596,8 +651,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
 
                             if followers == 99999 and friends == 99999:
                                 LOGGER.info("We try top stop steaming...")
-                                #print("We try top stop steaming...")
-                                SAVED_EPOCH_TIME = current_epoch + 900 #Just 15min break?
+                                #SAVED_EPOCH_TIME = current_epoch + 900 #Just 15min break?
                                 break
                             #Some let's try to catch the new users and remove bots
                             #if(followers < 50 and friends < 50 and friends > 0) and tweet_user_id not in AUTHOR_LIST:
@@ -605,14 +659,14 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                             #Let's try to take only new users so far..
                             new_user = 0
                             #if "2021" in joined and ("Mar" in joined or "Apr" in joined or "May" in joined):
-                            if "2021" in joined:
+                            if "2021" in joined or "2020" in joined or "2019" in joined or "2018" in joined or "2017" in joined or "2016" in joined or "2015" in joined or "2014" in joined or "2013" in joined:
                                 new_user = 1
-                                LOGGER.info("This is a new twitter users from year 2021")
+                                LOGGER.info("This is a new twitter users from year 2021. USER_ID: %s" % tweet_user_id)
                             #else:
                             #    new_user = 1
 
                             #if(followers < 500 and friends > 0) and tweet_user_id not in AUTHOR_LIST and new_user==1:
-                            if followers < 5000 and tweet_user_id not in AUTHOR_LIST and new_user==1:
+                            if followers < 3000 and (tweet_user_id not in AUTHOR_LIST or tweet_user_id==MOBILE_DONK_ID) and new_user==1 and bot==0:
                                 if(like_tweet(tweet_id)) == 0:
                                     LOG = "User ID: %s" %tweet_user_id
                                     LOGGER.info(LOG)
@@ -637,7 +691,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                                 else:
                                     LOGGER.info("We do not add this user to author list")
                                     #print("We do not add this user to author list")
-                            if tweet_user_id in AUTHOR_LIST and add_to_author_list == 0:
+                            if tweet_user_id in AUTHOR_LIST and add_to_author_list == 0 and tweet_user_id!=MOBILE_DONK_ID:
                                 LOGGER.info("Liked already this user...")
                                 #print("Liked already this user...")
 
@@ -681,11 +735,13 @@ def main():
     rules = get_rules(headers, bearer_token)
     delete = delete_all_rules(headers, bearer_token, rules)
 
-    #Run this periodic intervals to get followers....
+    ##Run this periodic intervals to get followers....
     #get_followers_list_v11()
     
     #get_rate_limits_v11()
     #print("Script started: %s" % BEGIN_TIME)
+
+    #check_how_many_like_list_is_in_follower_list()
     #sys.exit(0)
 
     #with open('nbr_tweets.txt', 'wb') as fp:
@@ -760,7 +816,7 @@ def main():
         pickle.dump(NBR_LIKED_24H_TWEETS, fp)
 
     set = set_rules(headers, delete, bearer_token)
-    get_stream(headers, set, bearer_token,AUTHOR_LIST,NBR_LIKED_24H_TWEETS,received_tweets)
+    get_stream(headers, set, bearer_token,AUTHOR_LIST,NBR_LIKED_24H_TWEETS,received_tweets,MY_FOLLOWERS_LIST)
 
 
 if __name__ == "__main__":

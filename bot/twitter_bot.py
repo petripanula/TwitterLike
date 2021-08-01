@@ -1,3 +1,5 @@
+import json
+import os
 import random
 import traceback
 import logging
@@ -27,6 +29,15 @@ twitter = Twython(
     access_token,
     access_token_secret
 )
+
+def return_tacostand_holdings():
+    result = os.popen("curl https://api.xrpscan.com/api/v1/account/rEhKZcz5Ndjm9BzZmmKrtvhXPnSWByssDv").read()
+    print(result)
+    values = json.loads(result)
+    print(json.dumps(values))
+    tacostand_holdings= json.dumps(values["xrpBalance"])
+    print(tacostand_holdings)
+    return tacostand_holdings
 
 def tweet_message(message):
     message1="Tweeted: %s Length: %s" % (message, len(message))
@@ -135,11 +146,8 @@ def saved_pic_tweets():
     tweet_pic.append("images/altseason_path.jpeg")
     pic_tweet.append("Just making it clear - TE-FOOD $TONE it's not only food related tracking company. It will cover a lot in the future - all kind of things in Supply Chain. TE-FOOD $TONE #kucoin #uniswap $BTC $ETH #supplychain #WHBT")
     tweet_pic.append("images/WBHT.jpeg")
-    """
-    
     pic_tweet.append("$XRP shit coin? Just take a moment and study it by yourself. #XRP is the only hi-cap alt which is not really gained value during this crypto season, but very soon new ATH. Stay tuned! #BTC #Crypto #altseason")
     tweet_pic.append("images/XRP_ekosystem.png")
-    """
     pic_tweet.append("Ripple is known for its large partnerships with banks. Banks have invested and continue to invest in Ripple for many years. As you may know, the banks have a good understanding of where to invest money #XRP $XRP to $10")
     tweet_pic.append("images/XRP_investors.jpg")
     pic_tweet.append("#XRP use cases. Hate it or love it - that doesn't change the facts. #BNB #BTC $XRP #Crypto")
@@ -202,13 +210,16 @@ def saved_tweets():
     tweet.append("$TONE http://www.supergroup.co.za/about/latest-news-article/53 If same kind of news would came from #VeChain $VET it would go x3 even 15 Billion market cap? Something is not right here. $TONE has so bright future")
     tweet.append("All #cryptoinvestor should know this. Do not follow only Hyped coins. Follow utility - money follows utility! $TONE ($TE_FOOD) #VET #BTC $doge $safemoon https://twitter.com/TE_FOOD/status/1385131254165692417?s=20")
     """
-
+    holdings = return_tacostand_holdings()
+    holdings = holdings.strip('"')
+    LOG = "*** Daily stat ***\nJed McCaleb's $XRP holdings (tacostand wallet): %s XRPs" %holdings
+    tweet.append(LOG)
 
 
 saved_tweets()
 saved_pic_tweets()
 
-"""
+
 tweets = len(tweet)
 random_list_of_tweets = random.sample(range(tweets), tweets)
 
@@ -221,8 +232,8 @@ for x in random_list_of_tweets:
   msg = "Sleeping %s seconds..." % my_sleep
   logging.info(msg)
   sleep(my_sleep)
-"""
 
+"""
 pic_tweets = len(pic_tweet)
 print(pic_tweets)
 random_list_of_pic_tweets = random.sample(range(pic_tweets), pic_tweets)
@@ -236,5 +247,5 @@ for x in random_list_of_pic_tweets:
   msg = "Sleeping %s seconds..." % my_sleep
   logging.info(msg)
   sleep(my_sleep)
-  
+"""
 logging.info("We are done!")
