@@ -103,7 +103,6 @@ def set_rules(headers, delete, bearer_token):
 def test_if_tweet_has_address(tweet):
     words = tweet.split()
     for word in words:
-        #print(word)
         if word[:2] == "0x":
             LOGGER.info("Probably address in tweet?")
             return True
