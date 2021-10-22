@@ -17,7 +17,7 @@ from requests_oauthlib import OAuth1Session
 MY_TWITTER_ID = "2776468107"
 MOBILE_DONK_ID = "1416302384393953282"
 
-NEGATIVE_WORDS = ["pumped", "PUMPED", "PUMPING", "pumping", "Giving", "winners", "group", "follows", "follow", "Join", "luck", "faucet", "dodge", "Elon", "VIP", "vip", "project", "holders", "HOLDERS"]
+NEGATIVE_WORDS = ["pumped", "PUMPED", "PUMPING", "pumping", "Giving", "winners", "group", "follows", "follow", "Join", "luck", "faucet", "dodge", "Elon", "VIP", "vip", "project", "holders", "HOLDERS", "sugar"]
 AUTHOR_LIST = []
 MY_FOLLOWERS_LIST = []
 START_TIME_LIMIT = time.time() - 900
@@ -106,6 +106,9 @@ def test_if_tweet_has_address(tweet):
         if word[:2] == "0x":
             LOGGER.info("Probably address in tweet?")
             return True
+        if "0x" in word:
+            LOGGER.info("Probably address in tweet?")
+            return True            
     return False
     
 def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets,timerange=86400):
@@ -177,10 +180,19 @@ def get_followers_list_v11():
     
     with open('my_followers.txt', 'rb') as fp:
         MY_FOLLOWERS_LIST_ORG = pickle.load(fp)
+        #https://www.geeksforgeeks.org/python-set-method/
         MY_DIFF_LIST = set(MY_FOLLOWERS_LIST_ORG) ^ set(MY_FOLLOWERS_LIST)
         LOGGER.info("My Changed Follower list below:")
         LOGGER.info(MY_DIFF_LIST)
+
+        #Just remove dublicates
+        MY_DIFF_LIST_NEW = []
         for user in MY_DIFF_LIST:
+            if user not in MY_DIFF_LIST_NEW:
+                MY_DIFF_LIST_NEW.append(user)
+
+        LOGGER.info(MY_DIFF_LIST_NEW)
+        for user in MY_DIFF_LIST_NEW:
             LOG = "User:%s:" %user
             LOGGER.info(LOG)
             if user in MY_FOLLOWERS_LIST_ORG:
@@ -756,7 +768,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                         name=json.dumps(json_response["includes"]["users"][0]["name"])
 
                         bot = 0
-                        if "BOT" in username.upper() or "BOT" in name.upper() or number_of_percentages > 1:
+                        if "BOT" in username.upper() or "BOT" in name.upper() or "ALERT" in name.upper() or number_of_percentages > 1:
                             LOGGER.info("************** Possible bot **********************")
                             LOG = "username: %s name: %s number_of_percentages: %s" % (username,name,number_of_percentages)
                             LOGGER.info(LOG)
@@ -856,7 +868,7 @@ def main():
     delete = delete_all_rules(headers, bearer_token, rules)
 
 
-    #tweet = "Testing ETH 0x4778752fD136486d4Ddc26F05eCc69AfBab9fC38 on the #Rinkeby #Ethereum test network."    
+    #tweet = "I want more crypto. Be a good beta bitch and start sending Relieved face BTC wallet:1DRTAM4JEy7uLxfccJh7vq3Eom7dTV6PT7 ETH wallet:0xda44642b736fdbb24579f117caac2c4be5bee240XRP wallet:rBgnUKAEiFhCRLPoYNPPe3JUWayRjP6Aygfindom findomaus paypig ausfindom humanatm cuck cashslave"    
     #test_if_tweet_has_address(tweet)
 
     ##Run this periodic intervals to get followers....
@@ -885,21 +897,17 @@ def main():
         AUTHOR_LIST = pickle.load(fp)
         LOG = "AUTHOR_LIST len: %s" % len(AUTHOR_LIST)
         LOGGER.debug(LOG)
-        #print("AUTHOR_LIST len: %s" % len(AUTHOR_LIST))
 
     with open('my_followers.txt', 'rb') as fp:
         MY_FOLLOWERS_LIST = pickle.load(fp)
         LOG = "MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST)
         LOGGER.debug(LOG)
-        #print("MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST))
 
     with open('nbr_liked.txt', 'rb') as fp:
         NBR_LIKED_24H_TWEETS = pickle.load(fp)
-        #print("NBR_LIKED_24H_TWEETS len: %s" % len(NBR_LIKED_24H_TWEETS))
 
     LOG = "24h like array size before remove: %s" %len(NBR_LIKED_24H_TWEETS)
     LOGGER.info(LOG)
-    #print("24h like array size before remove: %s" %len(NBR_LIKED_24H_TWEETS))
     likes24h = 0
     removed_likes24h = 0
     my_ctr = 0
@@ -911,29 +919,24 @@ def main():
         if debug_remove == 1:
             LOG = "%s: %s: %s <> %s" %(my_ctr, current_epoch, like, (int(like)+86400))
             LOGGER.debug(LOG)
-            #print("%s: %s: %s <> %s" %(my_ctr, current_epoch, like, (int(like)+86400)))
             ts1 = datetime.fromtimestamp(current_epoch).strftime('%Y-%m-%d %H:%M:%S')
             ts2 = datetime.fromtimestamp(like).strftime('%Y-%m-%d %H:%M:%S')
             ts3 = datetime.fromtimestamp((like+86400)).strftime('%Y-%m-%d %H:%M:%S')
             LOG = "%s: %s < %s" %(my_ctr, ts1, ts3)
             LOGGER.debug(LOG)
-            #print("%s: %s < %s" %(my_ctr, ts1, ts3))
         
         if current_epoch < (like+86400):
             likes24h = likes24h + 1
         else:
             if debug_remove == 1:
                 LOGGER.info("This should be removed")
-                #print("This should be removed")
             NBR_LIKED_24H_TWEETS.remove(like)
             removed_likes24h = removed_likes24h +1
 
     LOG = "Removed likes: %s. 24h like array size after remove: %s" %( removed_likes24h, len(NBR_LIKED_24H_TWEETS))
     LOGGER.info(LOG)
-    #print("Removed likes: %s. 24h like array size after remove: %s" %( removed_likes24h, len(NBR_LIKED_24H_TWEETS)))
     LOG = "Likes during last 24 hours: %s" %likes24h
     LOGGER.info(LOG)
-    #print("Likes during last 24 hours: %s" %likes24h)
 
     NBR_LIKED_24H_TWEETS.sort()
     with open('nbr_liked.txt', 'wb') as fp:
