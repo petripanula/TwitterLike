@@ -175,6 +175,7 @@ def get_followers_list_v11():
     followers=followers.strip('[')
     followers=followers.strip(']')
     followers=followers.strip(' ')
+    followers=followers.replace(" ", "")
     MY_FOLLOWERS_LIST = followers.split(",")
     #LOGGER.info(MY_FOLLOWERS_LIST)
     
@@ -188,6 +189,10 @@ def get_followers_list_v11():
         #Just remove dublicates
         MY_DIFF_LIST_NEW = []
         for user in MY_DIFF_LIST:
+            user = user.strip()
+            user = user.replace(" ", "")
+            LOG = ":%s:" %user
+            LOGGER.info(LOG)
             if user not in MY_DIFF_LIST_NEW:
                 MY_DIFF_LIST_NEW.append(user)
 
@@ -218,7 +223,7 @@ def get_followers_list_v11():
                         LOGGER.info("Less than 1000 followers")   
                 else:
                     LOGGER.info("Probably NA....")
-                    
+                     
     with open('my_followers.txt', 'wb') as fp:
         pickle.dump(MY_FOLLOWERS_LIST, fp)    
 
@@ -682,6 +687,11 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
             LOGGER.info(LOG)
             time.sleep(60)
             continue
+        if (is_my_account_shadowbanned()):
+            LOGGER.info("My Account is shadowbanned so we wait....")
+            current_epoch=time.mktime(datetime.now().timetuple())
+            SAVED_EPOCH_TIME = current_epoch + 3600
+            continue
         try:
             LOGGER.info("We send the http get...")
             response = requests.get(
@@ -743,6 +753,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                     json_response = json.loads(response_line)
                     json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
                     number_of_percentages = json_dump.count('%')
+                    number_of_hashtags = json_dump.count('#')
                     #LOGGER.debug(json_dump)
                     negative = 0
                     for my_words in NEGATIVE_WORDS:
@@ -759,6 +770,12 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                         LOGGER.info("No data in json!")
                         continue
 
+                    if number_of_hashtags > 4:
+                        LOG = "Possible shitpost due to hashtags: %s" %number_of_hashtags
+                        LOGGER.info(LOG)
+                        LOGGER.debug(json_dump)
+                        negative = 1
+                        
                     if negative == 0:
                         tweet_id=json.dumps(json_response["data"]["id"])
                         tweet_id=tweet_id.strip('"')
@@ -855,6 +872,53 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
             time.sleep(10)
             pass
 
+
+def is_my_account_shadowbanned():
+    #https://shadowban.eu/.api/<USER>
+    #in case of ban search key gets value false
+    #https://bitstudio.dev/twitter-shadowban-monitor/
+    
+    url = 'https://shadowban.eu/.api/Cryp7oPete'
+    headers={'Accept': 'application/json','User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0'}
+    print(url)
+    response = requests.get(url, headers=headers)
+
+    try:
+        json_response = response.json()
+    except Exception as e:
+        LOG = "An exception occurred: %s" %e
+        LOGGER.error(LOG)
+        return False
+        
+    data = json.dumps(json_response, indent=4, sort_keys=True)
+    LOGGER.info(data)
+
+    if "tests" in json_response:
+        ghost_ban=json.dumps(json_response["tests"]["ghost"]["ban"])
+        LOGGER.info(ghost_ban)
+        more_replies=json.dumps(json_response["tests"]["more_replies"])
+        LOGGER.info(more_replies)
+        search=json.dumps(json_response["tests"]["search"])
+        LOGGER.info(search)
+        typeahead=json.dumps(json_response["tests"]["typeahead"])
+        LOGGER.info(typeahead)
+
+        if "false" in search:
+            LOGGER.info("We have search ban...")
+            return True
+    
+        if "true" in ghost_ban:
+            LOGGER.info("We have ghost ban...")
+            return True
+    
+        if "false" in typeahead:
+            LOGGER.info("We have typeahead ban...")
+            return True
+    else:
+        LOGGER.info("No tests in json_response")
+        
+    return False
+
 LOGGER = setup_custom_logger('twitter')
 
 def main():
@@ -873,6 +937,7 @@ def main():
 
     ##Run this periodic intervals to get followers....
     #get_followers_list_v11()
+    #is_my_account_shadowbanned()
     #sys.exit(0)
     #get_rate_limits_v11()
     #print("Script started: %s" % BEGIN_TIME)
@@ -902,7 +967,10 @@ def main():
         MY_FOLLOWERS_LIST = pickle.load(fp)
         LOG = "MY_FOLLOWERS_LIST len: %s" % len(MY_FOLLOWERS_LIST)
         LOGGER.debug(LOG)
+        #LOGGER.debug(MY_FOLLOWERS_LIST)
 
+    #sys.exit(0)
+    
     with open('nbr_liked.txt', 'rb') as fp:
         NBR_LIKED_24H_TWEETS = pickle.load(fp)
 
