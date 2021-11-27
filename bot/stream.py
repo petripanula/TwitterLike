@@ -108,7 +108,11 @@ def test_if_tweet_has_address(tweet):
             return True
         if "0x" in word:
             LOGGER.info("Probably address in tweet?")
-            return True            
+            return True
+        if len(word) == 34:
+            LOGGER.info("******************************************************** This might contain address")
+            LOGGER.info(tweet)
+            
     return False
     
 def get_24h_likes(NBR_LIKED_24H_TWEETS,received_tweets,timerange=86400):
@@ -162,21 +166,34 @@ def get_followers_list_v11():
 
     #This only with V1.1
     #url = "https://api.twitter.com/1.1/application/rate_limit_status.json?resources=tweets"
-    url = "https://api.twitter.com/1.1/followers/ids.json?%s" %MY_TWITTER_ID
-     
-    response = oauth.get(url)
-        
-    for response_line in response.iter_lines():
-        if response_line:
-            json_response = json.loads(response_line)
-            json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
-            followers=json.dumps(json_response["ids"])
+    #url = "https://api.twitter.com/1.1/followers/ids.json?%s" %MY_TWITTER_ID
+    #url = "https://api.twitter.com/1.1/followers/ids.json?cursor=1698591189791918172"
 
-    followers=followers.strip('[')
-    followers=followers.strip(']')
-    followers=followers.strip(' ')
-    followers=followers.replace(" ", "")
-    MY_FOLLOWERS_LIST = followers.split(",")
+    MY_FOLLOWERS_LIST = []
+    next_cursor = -1
+
+    while next_cursor != 0:
+        url = "https://api.twitter.com/1.1/followers/ids.json?cursor=%s" %next_cursor
+        response = oauth.get(url)
+        for response_line in response.iter_lines():
+            if response_line:
+                json_response = json.loads(response_line)
+                json_dump = (json.dumps(json_response, indent=4, sort_keys=True))
+                #LOGGER.debug(json_dump)
+                followers=json.dumps(json_response["ids"])
+                #followers.extend(followers1)
+                #LOGGER.debug(followers)
+                next_cursor=int(json_response["next_cursor"])
+
+        followers=followers.strip('[')
+        followers=followers.strip(']')
+        followers=followers.strip(' ')
+        followers=followers.replace(" ", "")
+        MY_FOLLOWERS_LIST1 = followers.split(",")
+        MY_FOLLOWERS_LIST = MY_FOLLOWERS_LIST1 + MY_FOLLOWERS_LIST
+
+        #print(len(MY_FOLLOWERS_LIST))
+
     #LOGGER.info(MY_FOLLOWERS_LIST)
     
     with open('my_followers.txt', 'rb') as fp:
@@ -226,7 +243,7 @@ def get_followers_list_v11():
                      
     with open('my_followers.txt', 'wb') as fp:
         pickle.dump(MY_FOLLOWERS_LIST, fp)    
-
+    
 def check_in_my_following_list(userid):
     userid = userid.strip()
     userid = userid.replace(" ", "")
@@ -708,7 +725,9 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                     continue
                 else:
                     LOGGER.info("We make the exit....")
-                    sys.exit(0)
+                    time.sleep(600)
+                    continue
+                    #sys.exit(0)
 
             for response_line in response.iter_lines():
                 if response_line:
@@ -820,7 +839,7 @@ def get_stream(headers, set, bearer_token, AUTHOR_LIST, NBR_LIKED_24H_TWEETS, re
                             #    new_user = 1
 
                             #if(followers < 500 and friends > 0) and tweet_user_id not in AUTHOR_LIST and new_user==1:
-                            if followers < 10000 and (tweet_user_id not in AUTHOR_LIST or tweet_user_id==MOBILE_DONK_ID) and new_user==1 and bot==0:
+                            if followers < 100000 and (tweet_user_id not in AUTHOR_LIST or tweet_user_id==MOBILE_DONK_ID) and new_user==1 and bot==0:
                                 if(like_tweet(tweet_id)) == 0:
                                     LOG = "User ID: %s" %tweet_user_id
                                     LOGGER.info(LOG)
